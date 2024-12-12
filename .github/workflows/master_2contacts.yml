@@ -25,6 +25,7 @@ jobs:
         run: |
           cd contactsapp
           npm install
+          npm i -D vuetify vite-plugin-vuetify
           npm run build --if-present
           npm run test --if-present
       
