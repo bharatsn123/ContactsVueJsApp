@@ -1,6 +1,5 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import * as atlas from 'azure-maps-control'
 
 // Vuetify
 import 'vuetify/styles'
@@ -14,6 +13,5 @@ const vuetify = createVuetify({
   directives,
 })
 
-const app = createApp(App).use(vuetify).mount('#app')
-app.config.globalProperties.$atlas = atlas
+createApp(App).use(vuetify).mount('#app')
 

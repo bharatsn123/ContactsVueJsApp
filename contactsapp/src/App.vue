@@ -117,8 +117,81 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+
+        <!-- Add new contact hovering button -->
+        <v-fab-transition>
+          <v-btn color="primary"
+                 dark
+                 fixed
+                 bottom
+                 right
+                 fab
+                 class="mb-8 mr-8 fab-button"
+                 @click="openAddContactDialog"
+                 style="position: fixed; bottom: 32px; right: 64px; border-radius: 50%; width: 40px; height: 56px;">
+            <v-icon large>mdi-plus</v-icon>
+          </v-btn>
+        </v-fab-transition>
+
       </v-container>
     </v-main>
+
+    <!-- Dialog for adding new contact -->
+    <v-dialog v-model="addContactDialog" max-width="600px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Add New Contact</span>
+        </v-card-title>
+        <v-card-text>
+          <v-container>
+            <v-row>
+              <v-col cols="12">
+                <v-text-field v-model="newContact.name"
+                              label="Name"
+                              prepend-icon="mdi-account"
+                              required
+                  ></v-text-field>
+              </v-col>
+              <v-col cols="12">
+                <v-text-field v-model="newContact.email"
+                              label="Email"
+                              prepend-icon="mdi-email"
+                              required
+            ></v-text-field>
+              </v-col>
+              <v-col cols="12">
+                <v-text-field v-model="newContact.phone"
+                              label="Phone"
+                              prepend-icon="mdi-phone"></v-text-field>
+              </v-col>
+              <v-col cols="12">
+                <v-text-field v-model="newContact.website"
+                              label="Website"
+                              prepend-icon="mdi-web"></v-text-field>
+              </v-col>
+              <v-col cols="12">
+                <v-text-field v-model="newContact.company"
+                              label="Company"
+                              prepend-icon="mdi-office-building"></v-text-field>
+              </v-col>
+              <v-col cols="12">
+                <v-textarea v-model="newContact.address"
+                            label="Address"
+                            prepend-icon="mdi-map-marker"></v-textarea>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="closeAddContactDialog">Close</v-btn>
+          <v-btn color="blue darken-1" text @click="saveNewContact">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+
+
 
     <!-- Footer -->
     <v-footer app color="primary" dark padless>
@@ -145,6 +218,17 @@
         selectedContactIndex: null,
         formattedAddress: "",
         sortAscending: true, // Controls the sort order
+
+        // properties for the floating button and add contact dialog
+        addContactDialog: false, // Controls the visibility of the add contact dialog
+        newContact: {
+          name: "",
+          email: "",
+          phone: "",
+          website: "",
+          company: "",
+          address: ""
+        }
       };
     },
     computed: {
@@ -205,6 +289,29 @@
         const [street, suite, city, zipcode] = addressString.split(", ");
         return { street, suite, city, zipcode };
       },
+      async openAddContactDialog() {
+        this.addContactDialog = true; // Ensure this state is set before opening
+        await this.$nextTick(); // Wait for the next DOM update cycle
+      },
+      closeAddContactDialog() {
+        this.addContactDialog = false;
+        this.resetNewContact();
+      },
+      saveNewContact() {
+        // Add logic to save the new contact
+        this.contacts.push({ ...this.newContact, id: this.contacts.length + 1 });
+        this.closeAddContactDialog();
+      },
+      resetNewContact() {
+        this.newContact = {
+          name: '',
+          email: '',
+          phone: '',
+          website: '',
+          company: '',
+          address: ''
+        };
+      }
     },
     mounted() {
       this.fetchContacts();
@@ -239,4 +346,22 @@
   .white--text {
     color: white !important;
   }
+
+  /* Specific styles for the FAB */
+  .fab-button {
+    border-radius: 50%; /* Make it round */
+    width: 56px; /* Set width */
+    height: 56px; /* Set height */
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3), /* Larger blur and spread */
+                0px 2px 10px rgba(0, 0, 0, 0.2); /* Additional shadow layer */
+  }
+
+  .fab-button:hover {
+    background-color: rgba(255, 255, 255, 0.2); /* Optional hover effect */
+  }
+
+  .fixed {
+    z-index: 1000; /* Ensure it stays on top */
+  }
+
 </style>
