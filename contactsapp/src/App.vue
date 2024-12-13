@@ -1,44 +1,100 @@
 <template>
   <v-app>
-    <v-app-bar app color="primary" dark elevation="2" class="toolbar-spacing">
-      <v-container>
-        <v-row align="center">
-          <!-- App Name with Contacts Icon -->
-          <v-col cols="12" sm="3" class="d-flex align-center">
-            <v-icon left class="white--text">mdi-account-group</v-icon> <!-- Contacts Icon -->
-            <v-toolbar-title class="white--text ml-2">Contacts App</v-toolbar-title> <!-- Added ml-2 for margin -->
-          </v-col>
-
-          <!-- Search and Sort -->
-          <v-col cols="12" sm="9">
-            <v-row align="center" justify="end" no-gutters>
-              <v-col cols="auto" class="mr-2">
-                <v-select v-model="searchType"
-                          :items="searchOptions"
-                          dense
-                          hide-details
-                          outlined
-                          style="max-width: 120px;"></v-select>
-              </v-col>
-              <v-col>
-                <v-text-field v-model="searchQuery"
-                              :label="`Search by ${searchType}`"
-                              append-icon="mdi-magnify"
-                              outlined
-                              dense
-                              hide-details></v-text-field>
-              </v-col>
-              <v-col cols="auto" class="ml-2">
-                <v-btn text @click="toggleSortOrder" class="sort-button">
-                  <v-icon left>{{ sortAscending ? 'mdi-sort-ascending' : 'mdi-sort-descending' }}</v-icon>
-                  Sort
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-col>
+    <v-app-bar app color="primary" dark elevation="2">
+      <v-container class="py-0 fill-height d-flex align-center">
+        <!-- Icon and Title -->
+        <v-row align="center" class="flex-grow-0">
+          <v-icon class="mr-2">mdi-account-group</v-icon>
+          <v-toolbar-title class="mr-4">Contacts App</v-toolbar-title>
         </v-row>
+
+        <!-- Spacer -->
+        <v-spacer></v-spacer>
+
+        <!-- Search Bar -->
+        <v-row align="center" class="flex-grow-1">
+          <v-text-field v-model="searchQuery"
+                        :label="`Search by ${searchType}`"
+                        prepend-inner-icon="mdi-magnify"
+                        dense
+                        hide-details
+                        outlined
+                        style="max-width: 500px;">
+            <template v-slot:prepend>
+              <v-select v-model="searchType"
+                        :items="searchOptions"
+                        dense
+                        hide-details
+                        flat
+                        outlined
+                        style="max-width: 150px;">
+              </v-select>
+            </template>
+          </v-text-field>
+        </v-row>
+
+        <!-- Sort Button -->
+        <v-btn icon class="ml-4" @click="toggleSortOrder" style="margin-left: 16px;">
+          <v-icon>{{ sortAscending ? 'mdi-sort-ascending' : 'mdi-sort-descending' }}</v-icon>
+        </v-btn>
+
+        <!-- Spacer -->
+        <v-spacer></v-spacer>
+
+        <!-- Profile Menu -->
+        <v-menu offset-y>
+          <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" class="d-flex align-center" text>
+              <v-avatar size="32" class="mr-2">
+                <v-img src="https://www.gravatar.com/avatar/2c7d99fe281ecd3bcd65ab915bac6dd5?s=250"></v-img>
+              </v-avatar>
+              <span class="hidden-sm-and-down font-weight-medium">John</span>
+              <v-icon>mdi-chevron-down</v-icon>
+            </v-btn>
+          </template>
+
+          <v-card style="min-width: 150px;">
+            <v-list dense>
+              <!-- Export Option -->
+              <v-list-item @click="exportContacts">
+                <template v-slot:prepend>
+                  <v-icon small>mdi-file-document-arrow-right-outline</v-icon>
+                </template>
+                <v-list-item-title>Export</v-list-item-title>
+              </v-list-item>
+
+              <!-- Divider -->
+              <v-divider></v-divider>
+
+              <!-- Export Option -->
+              <v-list-item @click="openExternalLink('https://github.com/bharatsn123/ContactsVueJsApp')">
+                <template v-slot:prepend>
+                  <v-icon small>mdi-help-circle-outline</v-icon>
+                </template>
+                <v-list-item-title>Documentation</v-list-item-title>
+              </v-list-item>
+
+              <!-- Divider -->
+              <v-divider></v-divider>
+
+              <!-- Log Out Option -->
+              <v-list-item @click="logout">
+                <template v-slot:prepend>
+                  <v-icon small>mdi-logout</v-icon>
+                </template>
+                <v-list-item-title>Log Out</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-menu>
+
+
+
+
       </v-container>
     </v-app-bar>
+
+
 
 
 
@@ -76,6 +132,13 @@
                 <v-btn text color="primary">View Details</v-btn>
               </v-card-actions>
             </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-if="sortedContacts.length === 0 && searchQuery">
+          <v-col cols="12" class="text-center">
+            <v-alert type="info" outlined color="grey lighten-2">
+              No results found for "{{ searchQuery }}"
+            </v-alert>
           </v-col>
         </v-row>
 
@@ -149,15 +212,13 @@
                 <v-text-field v-model="newContact.name"
                               label="Name"
                               prepend-icon="mdi-account"
-                              required
-                  ></v-text-field>
+                              required></v-text-field>
               </v-col>
               <v-col cols="12">
                 <v-text-field v-model="newContact.email"
                               label="Email"
                               prepend-icon="mdi-email"
-                              required
-            ></v-text-field>
+                              required></v-text-field>
               </v-col>
               <v-col cols="12">
                 <v-text-field v-model="newContact.phone"
@@ -189,6 +250,40 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="exportDialog" max-width="900px">
+      <v-card>
+        <v-card-title>Export Contacts</v-card-title>
+        <v-card-text>
+          <v-data-table :headers="exportHeaders"
+                        :items="contacts"
+                        item-value="id"
+                        show-select
+                        class="elevation-1"
+                        return-object
+                        v-model="selectedContacts">
+            <!-- Use slots for nested data like company.name -->
+            <template v-slot:[`item.company.name`]="{ item }">
+              {{ item.company.name || 'N/A' }}
+            </template>
+            <template v-slot:[`item.address.street`]="{ item }">
+              {{ item.address ? item.address.street : 'N/A' }}
+            </template>
+          </v-data-table>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary"
+                 :disabled="!selectedContacts.length"
+                 @click="downloadCSV">
+            Export
+          </v-btn>
+          <v-btn text @click="exportDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+
 
 
 
@@ -228,7 +323,17 @@
           website: "",
           company: "",
           address: ""
-        }
+        },
+        exportDialog: false,
+        selectedContacts: [],
+        exportHeaders: [
+          { title: "Name", key: "name" },
+          { title: "Email", key: "email" },
+          { title: "Phone", key: "phone" },
+          { title: "Website", key: "website" },
+          { title: "Company", key: "company.name" },
+          { title: "Address", key: "address.street" }, 
+        ]
       };
     },
     computed: {
@@ -253,7 +358,7 @@
           return 0;
         });
         return sorted;
-      },
+      }
     },
     methods: {
       async fetchContacts() {
@@ -300,6 +405,7 @@
       saveNewContact() {
         // Add logic to save the new contact
         this.contacts.push({ ...this.newContact, id: this.contacts.length + 1 });
+        this.resetNewContact();
         this.closeAddContactDialog();
       },
       resetNewContact() {
@@ -311,6 +417,47 @@
           company: '',
           address: ''
         };
+      },
+      exportContacts() {
+        this.exportDialog = true;
+      },
+      downloadCSV() {
+        if (!this.selectedContacts.length) {
+          alert("No contacts selected for export.");
+          return;
+        }
+
+        // Generate CSV headers
+        const headers = this.exportHeaders.map((header) => header.title).join(",");
+
+        // Generate CSV rows
+        const rows = this.selectedContacts.map((contact) => {
+          return [
+            contact.name || "",
+            contact.email || "",
+            contact.phone || "",
+            contact.website || "",
+            (contact.company && contact.company.name) || "",
+            contact.address ? contact.address.street : "",
+          ].join(",");
+        });
+
+        // Combine headers and rows
+        const csvContent = [headers, ...rows].join("\n");
+
+        // Create and download CSV
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "contacts.csv";
+        link.click();
+      },
+      openExternalLink(url) {
+        window.open(url, "_blank"); // Opens the link in a new tab
+      },
+      logout() {
+        // Implement logout functionality
+        console.log('Logging out');
       }
     },
     mounted() {
@@ -318,8 +465,6 @@
     },
   };
 </script>
-
-
 
 
 
@@ -353,15 +498,27 @@
     width: 56px; /* Set width */
     height: 56px; /* Set height */
     box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3), /* Larger blur and spread */
-                0px 2px 10px rgba(0, 0, 0, 0.2); /* Additional shadow layer */
+    0px 2px 10px rgba(0, 0, 0, 0.2); /* Additional shadow layer */
   }
 
-  .fab-button:hover {
-    background-color: rgba(255, 255, 255, 0.2); /* Optional hover effect */
-  }
+    .fab-button:hover {
+      background-color: rgba(255, 255, 255, 0.2); /* Optional hover effect */
+    }
 
   .fixed {
     z-index: 1000; /* Ensure it stays on top */
   }
 
+  .custom-list-item {
+    min-width: 150px; /* Make each tile 1.5x wider */
+    padding: 12px 16px; /* Adjust padding for better spacing */
+  }
+
+  .v-list-item-avatar {
+    margin-right: 12px; /* Spacing between icon and title */
+  }
+
+  .v-list-item-title {
+    font-size: 14px; /* Ensure the font size matches the tile width */
+  }
 </style>
