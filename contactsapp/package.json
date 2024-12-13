@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint . --fix"
   },
-  "dependencies": {
+  "dependencies": { 
     "@mdi/font": "^7.4.47",
     "axios": "^1.7.9",
     "azure-maps-control": "^3.5.0",
