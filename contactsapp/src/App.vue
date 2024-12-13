@@ -142,44 +142,56 @@
           </v-col>
         </v-row>
 
-
-
         <!-- Contact Details Dialog -->
         <v-dialog v-model="dialog" max-width="900px">
-          <v-card v-if="selectedContact">
-            <v-card-title>Edit Contact</v-card-title>
+          <v-card>
+            <v-card-title>
+              <v-avatar size="80" class="mr-4">
+                <v-img :src="'https://i.pravatar.cc/150?img=' + selectedContact.id"></v-img>
+              </v-avatar>
+              <div>
+                <h3>{{ selectedContact.name }}</h3>
+                <v-icon small class="mr-2">mdi-domain</v-icon>
+                <p class="text-subtitle-1 grey--text">{{ selectedContact.company.name }}</p>
+              </div>
+            </v-card-title>
+
+            <v-divider></v-divider>
+
             <v-card-text>
-              <v-text-field v-model="selectedContact.name"
-                            label="Name"
-                            outlined
-                            dense></v-text-field>
-              <v-text-field v-model="selectedContact.email"
-                            label="Email"
-                            outlined
-                            dense></v-text-field>
-              <v-text-field v-model="selectedContact.phone"
-                            label="Phone"
-                            outlined
-                            dense></v-text-field>
-              <v-text-field v-model="selectedContact.website"
-                            label="Website"
-                            outlined
-                            dense></v-text-field>
-              <v-text-field v-model="selectedContact.company.name"
-                            label="Company"
-                            outlined
-                            dense></v-text-field>
-              <v-textarea v-model="formattedAddress"
-                          label="Address"
-                          outlined
-                          dense></v-textarea>
+              <v-container>
+                <v-row>
+                  <!-- Contact Info -->
+                  <v-col cols="12" md="6">
+                    <h4>Contact Information</h4>
+                    <v-text-field v-model="selectedContact.email" label="Email" outlined dense></v-text-field>
+                    <v-text-field v-model="selectedContact.phone" label="Phone" outlined dense></v-text-field>
+                    <v-text-field v-model="selectedContact.website" label="Website" outlined dense></v-text-field>
+                  </v-col>
+
+                  <!-- Address Info and Map -->
+                  <v-col cols="12" md="6">
+                    <h4>Address</h4>
+                    <p>{{ selectedContact.address.street }}, {{ selectedContact.address.suite }}</p>
+                    <p>{{ selectedContact.address.city }}, {{ selectedContact.address.zipcode }}</p>
+
+                    <!-- Azure Map Component -->
+                    <div id="azure-map" style="height: 300px;"></div>
+                  </v-col>
+                </v-row>
+              </v-container>
             </v-card-text>
+
             <v-card-actions>
-              <v-btn color="green" text @click="updateContact">Save</v-btn>
+              <v-spacer></v-spacer>
+              <v-btn color="green" text @click="updateContact">Save Changes</v-btn>
               <v-btn color="red" text @click="dialog = false">Close</v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
+
+
+
 
         <!-- Add new contact hovering button -->
         <v-fab-transition>
@@ -245,7 +257,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="closeAddContactDialog">Close</v-btn>
+          <v-btn color="grey darken-1" text @click="closeAddContactDialog">Close</v-btn>
           <v-btn color="blue darken-1" text @click="saveNewContact">Save</v-btn>
         </v-card-actions>
       </v-card>
@@ -283,11 +295,6 @@
       </v-card>
     </v-dialog>
 
-
-
-
-
-
     <!-- Footer -->
     <v-footer app color="primary" dark padless>
       <span class="mx-auto">&copy; 2024 Contacts App</span>
@@ -299,6 +306,7 @@
 
 <script>
   import axios from "axios";
+  import AzureMap from "./AzureMap.vue";
 
   export default {
     name: "App",
@@ -307,6 +315,7 @@
         contacts: [],
         searchQuery: "",
         searchType: "name",
+        azureMapsKey: "SyEaV43r35WFJrzD8DZXRAbhvZX1J4dJDdmKMuN3iKhQvx5FwXfLJQQJ99ALACYeBjFxoFRHAAAgAZMP2uzy",
         searchOptions: ["name", "company", "email"],
         dialog: false,
         selectedContact: null,
@@ -417,6 +426,34 @@
           company: '',
           address: ''
         };
+      },
+      selectContact(contact) {
+        this.selectedContact = contact;
+        this.dialog = true;
+        // Wait for the dialog to be rendered before initializing the map
+        this.$nextTick(() => {
+          this.initializeMap(contact.address.geo.lat, contact.address.geo.lng);
+        });
+      },
+      initializeMap(latitude, longitude) {
+        const map = new atlas.Map("azure-map", {
+          center: [parseFloat(longitude), parseFloat(latitude)],
+          zoom: this.zoom || 2,
+          style: "road",
+          authOptions: {
+            authType: "subscriptionKey",
+            subscriptionKey: this.azureMapsKey,
+          },
+        });
+
+        // Add a marker after the map is ready
+        map.events.add("ready", () => {
+          const marker = new atlas.HtmlMarker({
+            position: [parseFloat(longitude), parseFloat(latitude)],
+            text: "📍",
+          });
+          map.markers.add(marker);
+        });
       },
       exportContacts() {
         this.exportDialog = true;
