@@ -10,12 +10,12 @@
 </div>
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+## ℹ️ About The Project
 This is a **Contacts Application** using **Vue 3** and **Vuetify 3** for the front end and is deployed to Azure for demonstration purposes.
 
 ![image](https://github.com/user-attachments/assets/ad96acdb-b55d-43af-a933-09ddc6b063f0)
 
-## Features
+## 📇 Features
 
 - **Dynamic Search**: Search contacts by name, email, or company name.
 - **Sortable List**: Sort contacts alphabetically in ascending or descending order.
@@ -27,7 +27,7 @@ This is a **Contacts Application** using **Vue 3** and **Vuetify 3** for the fro
 
 
 
-## 🛠️ Tech Stack
+## ▶️ Tech Stack
 
 - **Vue 3**: Progressive JavaScript framework for building UI.
 - **Vuetify 3**: Material Design component framework for Vue.
@@ -37,12 +37,12 @@ This is a **Contacts Application** using **Vue 3** and **Vuetify 3** for the fro
 - **Github CI/CD**: Using github actions for build trigger and deployment in Azure.
 
 
-## Github Actions CI/CD
+## 🛠️ Github Actions CI/CD
 
 ![diagram-export-12-15-2024-1_00_21-PM](https://github.com/user-attachments/assets/4f1a5c66-04dd-4bdb-8c6a-fd8bc5a67f93)
 
 
-## Installation Instructions
+## 🧰 Installation Instructions
 
 To run this project locally, follow these steps:
 
