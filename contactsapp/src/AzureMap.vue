@@ -49,7 +49,7 @@ export default {
       map.events.add("ready", () => {
         // Create a new marker using Azure Maps' HtmlMarker feature
         const marker = new atlas.HtmlMarker({
-          position: [this.longitude, this.latitude], /
+          position: [this.longitude, this.latitude], 
           text: "📍", 
         });
 
