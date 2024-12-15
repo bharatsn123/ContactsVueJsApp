@@ -5,9 +5,11 @@
         <!-- Icon and Title -->
         <v-row align="center" class="flex-grow-0">
           <v-icon class="mr-2">mdi-account-group</v-icon>
-          <v-toolbar-title class="mr-4">Contacts App</v-toolbar-title>
+          <v-toolbar-title class="mr-4">My Contacts</v-toolbar-title>
+          <v-toolbar-subtitle class="contact-count">
+            {{ filteredContacts.length }}
+          </v-toolbar-subtitle>
         </v-row>
-
         <!-- Spacer -->
         <v-spacer></v-spacer>
 
@@ -93,10 +95,6 @@
 
       </v-container>
     </v-app-bar>
-
-
-
-
 
 
     <!-- Main Content -->
@@ -511,6 +509,15 @@
     top: 0;
     z-index: 10;
     background-color: var(--v-primary-base);
+  }
+
+  .contact-count {
+    color: white;
+    font-weight: inherit;
+    font-size: 0.8rem; /* Slightly smaller than the main title */
+    padding: 0 6px; /* Add some padding for spacing */
+    border-radius: 4px; /* Optional: round edges if needed */
+    background: rgba(255, 255, 255, 0.2); /* Semi-transparent background */
   }
 
   .sort-button {
