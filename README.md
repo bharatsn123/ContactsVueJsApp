@@ -13,7 +13,8 @@
 ## ℹ️ About The Project
 This is a **Contacts Application** using **Vue 3** and **Vuetify 3** for the front end and is deployed to Azure for demonstration purposes.
 
-![image](https://github.com/user-attachments/assets/ad96acdb-b55d-43af-a933-09ddc6b063f0)
+![image](https://github.com/user-attachments/assets/b2b8e836-426e-4557-ae41-8a96014f6bd6)
+
 
 ## 📇 Features
 
