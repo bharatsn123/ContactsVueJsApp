@@ -1,26 +1,61 @@
 <template>
   <v-app>
-    <v-app-bar app color="primary" dark elevation="2">
-      <v-container class="py-0 fill-height d-flex align-center">
-        <!-- Icon and Title -->
-        <v-row align="center" class="flex-grow-0">
-          <v-icon class="mr-2">mdi-account-group</v-icon>
-          <v-toolbar-title class="mr-4">My Contacts</v-toolbar-title>
-          <v-toolbar-subtitle class="contact-count">
-            {{ filteredContacts.length }}
-          </v-toolbar-subtitle>
-        </v-row>
-        <!-- Spacer -->
-        <v-spacer></v-spacer>
+    <!-- Mobile App Drawer -->
+    <v-navigation-drawer v-model="drawer" temporary app v-if="isMobile">
 
-        <!-- Search Bar -->
+      <!-- User Avatar and Name Section -->
+      <v-list-item class="pa-2">
+        <v-list-item-avatar>
+          <v-img
+            src="https://www.gravatar.com/avatar/2c7d99fe281ecd3bcd65ab915bac6dd5?s=250"
+            class="rounded-circle"
+            style="width: 36px; height: 36px;"
+          ></v-img>
+        </v-list-item-avatar>
+        <v-list-item-content>
+          <v-list-item-title class="font-weight-bold">John</v-list-item-title>
+          <v-list-item-subtitle>john.doe@example.com</v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
+
+      <v-divider></v-divider> <!-- Divider -->
+
+      <v-list>
+        <v-list-item @click="exportContacts">
+          <v-list-item-icon>
+            <v-icon>mdi-file-document-arrow-right-outline</v-icon>
+          </v-list-item-icon>
+          <v-list-item-title>Export</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="openExternalLink('https://github.com/bharatsn123/ContactsVueJsApp')">
+          <v-list-item-icon>
+            <v-icon>mdi-help-circle-outline</v-icon>
+          </v-list-item-icon>
+          <v-list-item-title>Documentation</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="logout">
+          <v-list-item-icon>
+            <v-icon>mdi-logout</v-icon>
+          </v-list-item-icon>
+          <v-list-item-title>Log Out</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-app-bar app color="primary" dark elevation="2">
+      <!-- Mobile view -->
+      <template v-if="isMobile">
+        <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+        <v-spacer></v-spacer>
         <v-row align="center" class="flex-grow-1">
           <v-text-field v-model="searchQuery"
                         :label="`Search by ${searchType}`"
                         prepend-inner-icon="mdi-magnify"
                         dense
                         hide-details
-                        outlined
+                        flat
+                        solo
+                        rounded
                         style="max-width: 500px;">
             <template v-slot:prepend>
               <v-select v-model="searchType"
@@ -28,276 +63,327 @@
                         dense
                         hide-details
                         flat
-                        outlined
+                        solo
+                        rounded
                         style="max-width: 150px;">
               </v-select>
             </template>
           </v-text-field>
         </v-row>
-
-        <!-- Sort Button -->
-        <v-btn icon class="ml-4" @click="toggleSortOrder" style="margin-left: 16px;">
+        <v-spacer></v-spacer>
+        <v-btn icon @click="toggleSortOrder">
           <v-icon>{{ sortAscending ? 'mdi-sort-ascending' : 'mdi-sort-descending' }}</v-icon>
         </v-btn>
+      </template>
 
-        <!-- Spacer -->
-        <v-spacer></v-spacer>
+      <!-- Desktop view -->
+      <template v-else>
+        <v-container class="py-0 fill-height d-flex align-center">
+          <!-- Icon and Title -->
+          <v-row align="center" class="flex-grow-0">
+            <v-icon class="mr-2">mdi-account-group</v-icon>
+            <v-toolbar-title class="mr-4">My Contacts</v-toolbar-title>
+            <v-toolbar-subtitle class="contact-count">
+              {{ filteredContacts.length }}
+            </v-toolbar-subtitle>
+          </v-row>
+          <!-- Spacer -->
+          <v-spacer></v-spacer>
 
-        <!-- Profile Menu -->
-        <v-menu offset-y>
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" class="d-flex align-center" text>
-              <v-avatar size="32" class="mr-2">
-                <v-img src="https://www.gravatar.com/avatar/2c7d99fe281ecd3bcd65ab915bac6dd5?s=250"></v-img>
-              </v-avatar>
-              <span class="hidden-sm-and-down font-weight-medium">John</span>
-              <v-icon>mdi-chevron-down</v-icon>
-            </v-btn>
-          </template>
+          <!-- Search Bar -->
+          <v-row align="center" class="flex-grow-1">
+            <v-text-field v-model="searchQuery"
+                          :label="`Search by ${searchType}`"
+                          class="ma-0 pa-0"
+                          prepend-inner-icon="mdi-magnify"
+                          dense
+                          hide-details
+                          flat
+                          solo
+                          rounded
+                          style="max-width: 500px;">
+              <template v-slot:prepend>
+                <v-select v-model="searchType"
+                          :items="searchOptions"
+                          dense
+                          hide-details
+                          flat
+                          solo
+                          rounded
+                          style="max-width: 150px;">
+                </v-select>
+              </template>
+            </v-text-field>
+          </v-row>
 
-          <v-card style="min-width: 150px;">
-            <v-list dense>
-              <!-- Export Option -->
-              <v-list-item @click="exportContacts">
-                <template v-slot:prepend>
-                  <v-icon small>mdi-file-document-arrow-right-outline</v-icon>
-                </template>
-                <v-list-item-title>Export</v-list-item-title>
-              </v-list-item>
+          <!-- Sort Button -->
+          <v-btn icon class="ml-4" @click="toggleSortOrder" style="margin-left: 16px;">
+            <v-icon>{{ sortAscending ? 'mdi-sort-ascending' : 'mdi-sort-descending' }}</v-icon>
+          </v-btn>
 
-              <!-- Divider -->
-              <v-divider></v-divider>
+          <!-- Spacer -->
+          <v-spacer></v-spacer>
 
-              <!-- Export Option -->
-              <v-list-item @click="openExternalLink('https://github.com/bharatsn123/ContactsVueJsApp')">
-                <template v-slot:prepend>
-                  <v-icon small>mdi-help-circle-outline</v-icon>
-                </template>
-                <v-list-item-title>Documentation</v-list-item-title>
-              </v-list-item>
+          <!-- Profile Menu -->
+          <v-menu offset-y>
+            <template v-slot:activator="{ props }">
+              <v-btn v-bind="props" class="d-flex align-center" text>
+                <v-avatar size="32" class="mr-2">
+                  <v-img src="https://www.gravatar.com/avatar/2c7d99fe281ecd3bcd65ab915bac6dd5?s=250"></v-img>
+                </v-avatar>
+                <span class="hidden-sm-and-down font-weight-medium">John</span>
+                <v-icon>mdi-chevron-down</v-icon>
+              </v-btn>
+            </template>
 
-              <!-- Divider -->
-              <v-divider></v-divider>
+            <v-card style="min-width: 150px;">
+              <v-list dense>
+                <!-- Export Option -->
+                <v-list-item @click="exportContacts">
+                  <template v-slot:prepend>
+                    <v-icon small>mdi-file-document-arrow-right-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Export</v-list-item-title>
+                </v-list-item>
 
-              <!-- Log Out Option -->
-              <v-list-item @click="logout">
-                <template v-slot:prepend>
-                  <v-icon small>mdi-logout</v-icon>
-                </template>
-                <v-list-item-title>Log Out</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-card>
-        </v-menu>
+                <!-- Divider -->
+                <v-divider></v-divider>
 
+                <!-- Export Option -->
+                <v-list-item @click="openExternalLink('https://github.com/bharatsn123/ContactsVueJsApp')">
+                  <template v-slot:prepend>
+                    <v-icon small>mdi-help-circle-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Documentation</v-list-item-title>
+                </v-list-item>
 
+                <!-- Divider -->
+                <v-divider></v-divider>
 
-
-      </v-container>
-    </v-app-bar>
-
-
-    <!-- Main Content -->
-    <v-main>
-      <v-container>
-        <!-- Add margin between navigation bar and main content -->
-        <div style="margin-top: 32px;"></div>
-
-        <!-- Contact Cards -->
-        <v-row>
-          <v-col v-for="contact in sortedContacts"
-                 :key="contact.id"
-                 cols="12"
-                 sm="6"
-                 md="4">
-            <v-card @click="selectContact(contact)" outlined class="hoverable">
-              <v-card-title>{{ contact.name }}</v-card-title>
-              <v-card-subtitle>
-                <div class="d-flex align-center">
-                  <v-icon small left color="grey">mdi-email</v-icon>
-                  {{ contact.email }}
-                </div>
-                <div class="d-flex align-center mt-2">
-                  <v-icon small left color="grey">mdi-phone</v-icon>
-                  {{ contact.phone }}
-                </div>
-                <div class="d-flex align-center mt-2">
-                  <v-icon small left color="grey">mdi-domain</v-icon>
-                  {{ contact.company.name }}
-                </div>
-              </v-card-subtitle>
-              <v-card-actions>
-                <v-btn text color="primary">View Details</v-btn>
-              </v-card-actions>
+                <!-- Log Out Option -->
+                <v-list-item @click="logout">
+                  <template v-slot:prepend>
+                    <v-icon small>mdi-logout</v-icon>
+                  </template>
+                  <v-list-item-title>Log Out</v-list-item-title>
+                </v-list-item>
+              </v-list>
             </v-card>
-          </v-col>
-        </v-row>
-        <v-row v-if="sortedContacts.length === 0 && searchQuery">
-          <v-col cols="12" class="text-center">
-            <v-alert type="info" outlined color="grey lighten-2">
-              No results found for "{{ searchQuery }}"
-            </v-alert>
-          </v-col>
-        </v-row>
+          </v-menu>
+        </v-container>
+      </template>
+        </v-app-bar>
 
-        <!-- Contact Details Dialog -->
-        <v-dialog v-model="dialog" max-width="900px">
+
+
+        <!-- Main Content -->
+        <v-main>
+          <v-container>
+            <!-- Add margin between navigation bar and main content -->
+            <div style="margin-top: 32px;"></div>
+            <!-- New row for mobile display -->
+            <v-row class="d-md-none mb-4" v-if="isMobile">
+              <v-col cols="12">
+                <h2 class="text-h5">
+                  My Contacts <span class="text-subtitle-1">({{ filteredContacts.length }})</span>
+                </h2>
+              </v-col>
+            </v-row>
+
+            <!-- Contact Cards -->
+            <v-row>
+              <v-col v-for="contact in sortedContacts"
+                     :key="contact.id"
+                     cols="12"
+                     sm="6"
+                     md="4">
+                <v-card @click="selectContact(contact)" outlined class="hoverable">
+                  <v-card-title>{{ contact.name }}</v-card-title>
+                  <v-card-subtitle>
+                    <div class="d-flex align-center">
+                      <v-icon small left color="grey">mdi-email</v-icon>
+                      {{ contact.email }}
+                    </div>
+                    <div class="d-flex align-center mt-2">
+                      <v-icon small left color="grey">mdi-phone</v-icon>
+                      {{ contact.phone }}
+                    </div>
+                    <div class="d-flex align-center mt-2">
+                      <v-icon small left color="grey">mdi-domain</v-icon>
+                      {{ contact.company.name }}
+                    </div>
+                  </v-card-subtitle>
+                  <v-card-actions>
+                    <v-btn text color="primary">View Details</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
+            <v-row v-if="sortedContacts.length === 0 && searchQuery">
+              <v-col cols="12" class="text-center">
+                <v-alert type="info" outlined color="grey lighten-2">
+                  No results found for "{{ searchQuery }}"
+                </v-alert>
+              </v-col>
+            </v-row>
+
+            <!-- Contact Details Dialog -->
+            <v-dialog v-model="dialog" max-width="900px">
+              <v-card>
+                <v-card-title>
+                  <v-avatar size="80" class="mr-4">
+                    <v-img :src="'https://i.pravatar.cc/150?img=' + selectedContact.id"></v-img>
+                  </v-avatar>
+                  <div>
+                    <h3>{{ selectedContact.name }}</h3>
+                    <v-icon small class="mr-2">mdi-domain</v-icon>
+                    <p class="text-subtitle-1 grey--text">{{ selectedContact.company.name }}</p>
+                  </div>
+                </v-card-title>
+
+                <v-divider></v-divider>
+
+                <v-card-text>
+                  <v-container>
+                    <v-row>
+                      <!-- Contact Info -->
+                      <v-col cols="12" md="6">
+                        <h4>Contact Information</h4>
+                        <v-text-field v-model="selectedContact.email" label="Email" outlined dense></v-text-field>
+                        <v-text-field v-model="selectedContact.phone" label="Phone" outlined dense></v-text-field>
+                        <v-text-field v-model="selectedContact.website" label="Website" outlined dense></v-text-field>
+                      </v-col>
+
+                      <!-- Address Info and Map -->
+                      <v-col cols="12" md="6">
+                        <h4>Address</h4>
+                        <p>{{ selectedContact.address.street }}, {{ selectedContact.address.suite }}</p>
+                        <p>{{ selectedContact.address.city }}, {{ selectedContact.address.zipcode }}</p>
+
+                        <!-- Azure Map Component -->
+                        <div id="azure-map" style="height: 300px;"></div>
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                </v-card-text>
+
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn color="green" text @click="updateContact">Save Changes</v-btn>
+                  <v-btn color="red" text @click="dialog = false">Close</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+
+
+
+
+            <!-- Add new contact hovering button -->
+            <v-fab-transition>
+              <v-btn color="primary"
+                     dark
+                     fixed
+                     bottom
+                     right
+                     fab
+                     class="mb-8 mr-8 fab-button"
+                     @click="openAddContactDialog"
+                     icon="mdi-plus">
+              </v-btn>
+            </v-fab-transition>
+
+          </v-container>
+        </v-main>
+
+        <!-- Dialog for adding new contact -->
+        <v-dialog v-model="addContactDialog" max-width="600px">
           <v-card>
             <v-card-title>
-              <v-avatar size="80" class="mr-4">
-                <v-img :src="'https://i.pravatar.cc/150?img=' + selectedContact.id"></v-img>
-              </v-avatar>
-              <div>
-                <h3>{{ selectedContact.name }}</h3>
-                <v-icon small class="mr-2">mdi-domain</v-icon>
-                <p class="text-subtitle-1 grey--text">{{ selectedContact.company.name }}</p>
-              </div>
+              <span class="headline">Add New Contact</span>
             </v-card-title>
-
-            <v-divider></v-divider>
-
             <v-card-text>
               <v-container>
                 <v-row>
-                  <!-- Contact Info -->
-                  <v-col cols="12" md="6">
-                    <h4>Contact Information</h4>
-                    <v-text-field v-model="selectedContact.email" label="Email" outlined dense></v-text-field>
-                    <v-text-field v-model="selectedContact.phone" label="Phone" outlined dense></v-text-field>
-                    <v-text-field v-model="selectedContact.website" label="Website" outlined dense></v-text-field>
+                  <v-col cols="12">
+                    <v-text-field v-model="newContact.name"
+                                  label="Name"
+                                  prepend-icon="mdi-account"
+                                  required></v-text-field>
                   </v-col>
-
-                  <!-- Address Info and Map -->
-                  <v-col cols="12" md="6">
-                    <h4>Address</h4>
-                    <p>{{ selectedContact.address.street }}, {{ selectedContact.address.suite }}</p>
-                    <p>{{ selectedContact.address.city }}, {{ selectedContact.address.zipcode }}</p>
-
-                    <!-- Azure Map Component -->
-                    <div id="azure-map" style="height: 300px;"></div>
+                  <v-col cols="12">
+                    <v-text-field v-model="newContact.email"
+                                  label="Email"
+                                  prepend-icon="mdi-email"
+                                  required></v-text-field>
+                  </v-col>
+                  <v-col cols="12">
+                    <v-text-field v-model="newContact.phone"
+                                  label="Phone"
+                                  prepend-icon="mdi-phone"></v-text-field>
+                  </v-col>
+                  <v-col cols="12">
+                    <v-text-field v-model="newContact.website"
+                                  label="Website"
+                                  prepend-icon="mdi-web"></v-text-field>
+                  </v-col>
+                  <v-col cols="12">
+                    <v-text-field v-model="newContact.company"
+                                  label="Company"
+                                  prepend-icon="mdi-office-building"></v-text-field>
+                  </v-col>
+                  <v-col cols="12">
+                    <v-textarea v-model="newContact.address"
+                                label="Address"
+                                prepend-icon="mdi-map-marker"></v-textarea>
                   </v-col>
                 </v-row>
               </v-container>
             </v-card-text>
-
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="green" text @click="updateContact">Save Changes</v-btn>
-              <v-btn color="red" text @click="dialog = false">Close</v-btn>
+              <v-btn color="grey darken-1" text @click="closeAddContactDialog">Close</v-btn>
+              <v-btn color="blue darken-1" text @click="saveNewContact">Save</v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
 
+        <v-dialog v-model="exportDialog" max-width="900px">
+          <v-card>
+            <v-card-title>Export Contacts</v-card-title>
+            <v-card-text>
+              <v-data-table :headers="exportHeaders"
+                            :items="contacts"
+                            item-value="id"
+                            show-select
+                            class="elevation-1"
+                            return-object
+                            v-model="selectedContacts">
+                <!-- Use slots for nested data like company.name -->
+                <template v-slot:[`item.company.name`]="{ item }">
+                  {{ item.company.name || 'N/A' }}
+                </template>
+                <template v-slot:[`item.address.street`]="{ item }">
+                  {{ item.address ? item.address.street : 'N/A' }}
+                </template>
+              </v-data-table>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="primary"
+                     :disabled="!selectedContacts.length"
+                     @click="downloadCSV">
+                Export
+              </v-btn>
+              <v-btn text @click="exportDialog = false">Close</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
-
-
-        <!-- Add new contact hovering button -->
-        <v-fab-transition>
-          <v-btn color="primary"
-                 dark
-                 fixed
-                 bottom
-                 right
-                 fab
-                 class="mb-8 mr-8 fab-button"
-                 @click="openAddContactDialog"
-                 style="position: fixed; bottom: 32px; right: 64px; border-radius: 50%; width: 40px; height: 56px;">
-            <v-icon large>mdi-plus</v-icon>
-          </v-btn>
-        </v-fab-transition>
-
-      </v-container>
-    </v-main>
-
-    <!-- Dialog for adding new contact -->
-    <v-dialog v-model="addContactDialog" max-width="600px">
-      <v-card>
-        <v-card-title>
-          <span class="headline">Add New Contact</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            <v-row>
-              <v-col cols="12">
-                <v-text-field v-model="newContact.name"
-                              label="Name"
-                              prepend-icon="mdi-account"
-                              required></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field v-model="newContact.email"
-                              label="Email"
-                              prepend-icon="mdi-email"
-                              required></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field v-model="newContact.phone"
-                              label="Phone"
-                              prepend-icon="mdi-phone"></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field v-model="newContact.website"
-                              label="Website"
-                              prepend-icon="mdi-web"></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field v-model="newContact.company"
-                              label="Company"
-                              prepend-icon="mdi-office-building"></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-textarea v-model="newContact.address"
-                            label="Address"
-                            prepend-icon="mdi-map-marker"></v-textarea>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="grey darken-1" text @click="closeAddContactDialog">Close</v-btn>
-          <v-btn color="blue darken-1" text @click="saveNewContact">Save</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog v-model="exportDialog" max-width="900px">
-      <v-card>
-        <v-card-title>Export Contacts</v-card-title>
-        <v-card-text>
-          <v-data-table :headers="exportHeaders"
-                        :items="contacts"
-                        item-value="id"
-                        show-select
-                        class="elevation-1"
-                        return-object
-                        v-model="selectedContacts">
-            <!-- Use slots for nested data like company.name -->
-            <template v-slot:[`item.company.name`]="{ item }">
-              {{ item.company.name || 'N/A' }}
-            </template>
-            <template v-slot:[`item.address.street`]="{ item }">
-              {{ item.address ? item.address.street : 'N/A' }}
-            </template>
-          </v-data-table>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary"
-                 :disabled="!selectedContacts.length"
-                 @click="downloadCSV">
-            Export
-          </v-btn>
-          <v-btn text @click="exportDialog = false">Close</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Footer -->
-    <v-footer app color="primary" dark padless>
-      <span class="mx-auto">&copy; 2024 Contacts App</span>
-    </v-footer>
-  </v-app>
+        <!-- Footer -->
+        <v-footer app color="primary" dark padless>
+          <span class="mx-auto">&copy; 2024 Contacts App</span>
+        </v-footer>
+</v-app>
 </template>
 
 
@@ -310,6 +396,8 @@
     name: "App",
     data() {
       return {
+        drawer: false,
+        isMobile: false,
         contacts: [],
         searchQuery: "",
         searchType: "name",
@@ -368,6 +456,9 @@
       }
     },
     methods: {
+      checkScreenSize() {
+    this.isMobile = window.innerWidth < 960; // Adjust breakpoint as needed
+  },
       async fetchContacts() {
         try {
           const response = await axios.get("https://jsonplaceholder.typicode.com/users");
@@ -497,6 +588,11 @@
     },
     mounted() {
       this.fetchContacts();
+      this.checkScreenSize();
+      window.addEventListener('resize', this.checkScreenSize);
+    },
+    beforeDestroy() {
+      window.removeEventListener('resize', this.checkScreenSize);
     },
   };
 </script>
@@ -504,6 +600,9 @@
 
 
 <style scoped>
+  :slotted(.slot-class) {
+    background-color: #000;
+  }
   .toolbar-spacing {
     position: sticky;
     top: 0;
@@ -539,10 +638,24 @@
   /* Specific styles for the FAB */
   .fab-button {
     border-radius: 50%; /* Make it round */
-    width: 56px; /* Set width */
-    height: 56px; /* Set height */
+    padding: 30px;
+    position: fixed !important;
+    bottom: 48px !important;
+    right: 64px !important;
     box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3), /* Larger blur and spread */
     0px 2px 10px rgba(0, 0, 0, 0.2); /* Additional shadow layer */
+    z-index: 1000;
+    display: flex; /* Center the icon */
+    justify-content: center;
+    align-items: center;
+  }
+
+  @media (max-width: 600px) {
+    .fab-button {
+      border-radius: 50%; /* Make it round */
+      bottom: 32px !important;
+      right: 0px !important;
+    }
   }
 
     .fab-button:hover {
